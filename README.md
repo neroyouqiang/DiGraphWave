@@ -34,6 +34,6 @@ The adjacent matrix is</br>
 <strong>python main.py [--min_support MIN_SUPPORT] [--max_size MAX_SIZE]</strong>
 ```
 -h, --help                 show this help message and exit
---min_support MIN_SUPPORT  Minimum suport of the frequent subgraph.                 
---max_size MAX_SIZE        Maximum size of the common subgraph. -1 means not limited.
+--min_support MIN_SUPPORT  Minimum suport of the frequent subgraph. Default: 1.0.                
+--max_size MAX_SIZE        Maximum size of the common subgraph. -1 means not limited. Default: -1.
 ```
