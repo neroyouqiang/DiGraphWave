@@ -1,7 +1,7 @@
 ### 1. Input data
 
-Please copy the input graphs into the folder "./data/". One csv file represents one graph. </br>
-For the csv file, the first line is the label of the vertexes. The labels of the vertexes are integers from 1. The other lines are the adjacent matrix of the graph. The number in the same line is separated by ",". Following is an example:</br>
+Please move the graph files into the folder "./data/". One file represents one graph. </br>
+For the graph file, the first line is the label of the vertices. The labels of the vertexes are integers from 1. The other lines are the adjacent matrix of the graph. The number in the same line is separated by ",". Following is an example:</br>
 
 <strong>Content of 01.csv</strong></br>
 
