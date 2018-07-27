@@ -16,7 +16,9 @@ For the graph file, the first line is the label of the vertices. The labels of t
 
 <strong>Interpretation of 01.csv</strong></br>
 
-The vertexes are [1,1,2,1,1,4,1]</br>
+The vertices are 
+[1,1,2,1,1,4,1]</br>
+
 The adjacent matrix is</br>
 [[0, 0, 1, 0, 0, 0, 0],</br>
  [0, 0, 1, 0, 0, 0, 0],</br>
