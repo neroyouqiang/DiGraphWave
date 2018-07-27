@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
 
+import argparse
 import numpy as np
 import pickle
 # import MySQLdb
 
+from mydata import load_datas, get_min_graph_size
 
-def generate_next_subgraph(As, Vs, subgraphs_1):
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--min_support', type = float, default = '1.0', 
+                    help = 'Minimum suport of the frequent subgraph.')
+parser.add_argument('--max_size', type = int, default = '-1', 
+                    help = 'Maximum size of the common subgraph. -1 means not limited.')
+
+
+def generate_bigger_subgraph(As, Vs, subgraphs_1):
     # data to return
     subgraphs_k = []
     
@@ -48,8 +58,25 @@ def generate_next_subgraph(As, Vs, subgraphs_1):
     # return
     return subgraphs_k
 
+'''
+def generate_subgraphs(As, Vs, max_size=5, silence=False):
+    # data to return
+    subgraphs = []
+    subgraphs_list = []
+    
+    # generate
+    for ii in xrange(max_size):
+        if not silence: print 'Generate', ii, 'size subgraphs ...'
+        subgraphs = generate_bigger_subgraph(As, Vs, subgraphs)
+        subgraphs_list.append(subgraphs)
+        # save
+        pickle.dump(subgraphs, open('./saves/subgraphs/%03d.csv' % (ii + 1), 'w'))
+        
+    # return 
+    return subgraphs_list
+'''
 
-def group_by_labels(As, Vs, subgraphs): 
+def subgraphs_group(As, Vs, subgraphs): 
     # data to return
     subgraph_groups = {}
     
@@ -85,6 +112,22 @@ def group_by_labels(As, Vs, subgraphs):
     return subgraph_groups
 
 
+def subgraphs_disband(As, Vs, subgraph_groups):
+    # data to return
+    subgraphs = []
+    
+    # init data
+    for V in Vs:
+        subgraphs.append([])
+    
+    for key in subgraph_groups.keys():
+        for ii in xrange(len(subgraph_groups[key])):
+            subgraphs[ii].extend(subgraph_groups[key][ii])
+        
+    # return
+    return subgraphs
+
+
 def filter_groups_by_subgraph_label_name(subgraph_groups, support_num):
     # data to return
     subgraph_groups = dict(subgraph_groups)
@@ -103,7 +146,7 @@ def filter_groups_by_subgraph_label_name(subgraph_groups, support_num):
     return subgraph_groups
 
 
-def calculate_mark_set(As, Vs, subgraph_groups, ite_num=4):
+def calculate_mark_set(As, Vs, subgraph_groups, ite_num=3):
     # data to return 
     subgraph_labels = {}
     subgraph_marksets = {}
@@ -194,97 +237,48 @@ def select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, support
         for ii in xrange(len(subgraph_group)):
             for jj in xrange(len(subgraph_group[ii])):
                 markset = subgraph_marksets[key][ii][jj]
-                # whether is the repeated data in the same graph
-                if markset in subgraph_marksets[key][ii][0: jj]:
-                    continue
-                
                 # count how many time the mark set appeared
                 if markset not in list_markset:
                     # init count list
                     list_markset.append(markset)
                     list_count.append(1)
-                    list_poistion.append({'key': key, 'ii': ii, 'jj': jj})
+                    list_poistion.append([{'key': key, 'ii': ii, 'jj': jj}])
                 else:
-                    list_count[list_markset.index(markset)] += 1
-                    
+                    list_poistion[list_markset.index(markset)].append({'key': key, 'ii': ii, 'jj': jj})
+                    # whether is the repeated data in the same graph
+                    if markset not in subgraph_marksets[key][ii][0: jj]:
+                        list_count[list_markset.index(markset)] += 1
+        
+        # [Acceleration] the new subgraph list only contains frequent subgraphs
+        subgraph_group_new = []
+        for ii in xrange(len(subgraph_group)):
+            subgraph_group_new.append([])
+        
         # select frequent subgraph
         for tt in xrange(len(list_count)):
             if list_count[tt] >= support_num:
                 # position information
-                pos = list_poistion[tt]
+                pos = list_poistion[tt][0]
                 nodes = subgraph_group[pos['ii']][pos['jj']]
+                
                 # graph information
                 frequent_fs.append(list_count[tt])
                 frequent_Vs.append(Vs[pos['ii']][nodes])
                 frequent_As.append(As[pos['ii']][nodes][:, nodes])
+                
+                # [Acceleration] add to new subgraph list
+                for pos in list_poistion[tt]:
+                    nodes = subgraph_group[pos['ii']][pos['jj']]
+                    subgraph_group_new[pos['ii']].append(nodes)
+        
+        # [Acceleration] refresh subgraph group
+        subgraph_groups[key] = subgraph_group_new
     
     # return 
     return frequent_As, frequent_Vs, frequent_fs 
 
 
-if __name__ == '__main__':
-    # input data
-    Support_Num = 3
-    Subgraph_Size = 3
-    
-    As = [np.array([[0, 0, 1, 0, 0, 0, 0], 
-                    [0, 0, 1, 0, 0, 0, 0],
-                    [-1, -1, 0, 1, 0, 0, 0],
-                    [0, 0, -1, 0, 0, 1, 0],
-                    [0, 0, 0, 0, 0, 1, 0],
-                    [0, 0, 0, -1, -1, 0, 1],
-                    [0, 0, 0, 0, 0, -1, 0]]),
-    
-          np.array([[0, 0, 1, 0, 0, 0, 0], 
-                    [0, 0, 1, 0, 0, 0, 0],
-                    [-1, -1, 0, 1, 0, 0, 0],
-                    [0, 0, -1, 0, 0, 1, 0],
-                    [0, 0, 0, 0, 0, 1, 0],
-                    [0, 0, 0, -1, -1, 0, 1],
-                    [0, 0, 0, 0, 0, -1, 0]]),
-    
-          np.array([[0, 0, 0, 1, 0, 0, 0], 
-                    [0, 0, 0, 1, 1, 0, 0],
-                    [0, 0, 0, 0, 1, 0, 0],
-                    [-1, -1, 0, 0, 0, 1, 0],
-                    [0, -1, -1, 0, 0, 0, 1],
-                    [0, 0, 0, -1, 0, 0, 0],
-                    [0, 0, 0, 0, -1, 0, 0]])]
-    
-    Vs = [np.array([1, 1, 2, 1, 1, 4, 1]), 
-          np.array([1, 1, 4, 1, 1, 3, 1]),
-          np.array([1, 1, 1, 2, 4, 1, 1])]
-    
-    # get different subgraphs with different size
-    subgraphs = []
-    subgraphs_list = []
-    for ii in xrange(5):
-        print 'Generate', ii, 'size subgraphs ...'
-        subgraphs = generate_next_subgraph(As, Vs, subgraphs)
-        subgraphs_list.append(subgraphs)
-    
-    print 'Generate subgraphs complete.\n'
-        
-    # devide subgraphs by node labels  
-    print 'Group subgraphs by subgraph label name ...'
-    subgraph_groups = group_by_labels(As, Vs, subgraphs_list[Subgraph_Size - 1])
-    print 'Group subgraphs by subgraph label name complete.\n'
-    
-    # filter by subgraph label name
-    print 'Filter subgraph groups by subgraph label name ...'
-    subgraph_groups = filter_groups_by_subgraph_label_name(subgraph_groups, Support_Num)
-    print 'Filter subgraph groups by subgraph label name complete.\n'
-        
-    # calculate the mark set by WL principle
-    print 'Calculate the mark set ...'
-    subgraph_marksets = calculate_mark_set(As, Vs, subgraph_groups)
-    print 'Calculate the mark set Complete.\n'
-        
-    # select frequent subgraphs
-    print 'Select frequent subgraphs ...'
-    frequent_As, frequent_Vs, frequent_fs = select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, Support_Num)
-    print 'Select frequent subgraphs complete.\n'
-    
+def result_save_show(frequent_As, frequent_Vs, frequent_fs):
     # save results
     pickle.dump(frequent_As, open('saves/results/frequent_As.pkl', 'w'))
     pickle.dump(frequent_Vs, open('saves/results/frequent_Vs.pkl', 'w'))
@@ -292,6 +286,7 @@ if __name__ == '__main__':
     
     # print result
     print '\n=================== Result ===================\n'
+    # print 'Find %d frequent subgraphs.\n' % len(frequent_fs)
     for tt in xrange(len(frequent_fs)):
         print 'Subgraph', tt + 1, '. Frequency is', frequent_fs[tt]
         print 'Vertex labels:'
@@ -299,5 +294,67 @@ if __name__ == '__main__':
         print 'Adjacent matrix:'
         print frequent_As[tt]
         print ''
-                
+
+
+if __name__ == '__main__':
+    # parser
+    FLAGS, unparsed = parser.parse_known_args()
+    
+    # input data
+    As, Vs = load_datas()
+    
+    # inferred data
+    support_num = len(As) * FLAGS.min_support
+    max_size = FLAGS.max_size
+    if max_size <= 0:
+        max_size = get_min_graph_size(As, Vs)
+    
+    # print start info
+    print '\nSearch for the frequent subgraph. Minimum support is %d. Maximum subgraph size is %d. \n' % (support_num, max_size)
+    
+    subgraphs = []
+    frequent_As = []
+    frequent_Vs = []
+    frequent_fs = []
+    for ii in xrange(max_size):
+        # get different subgraphs with different size
+        print 'Generate', ii, 'size subgraphs ...'
+        subgraphs = generate_bigger_subgraph(As, Vs, subgraphs)
+        print 'Generate', ii, 'size subgraphs complete.\n'
+        
+        # get different subgraphs with different size
+        # print 'Generate subgraphs ...'
+        # subgraphs_list = generate_subgraphs(As, Vs, max_size)
+        # print 'Generate subgraphs complete.\n'
+            
+        # group subgraphs by node labels  
+        print 'Group subgraphs by subgraph label name ...'
+        subgraph_groups = subgraphs_group(As, Vs, subgraphs)
+        print 'Group subgraphs by subgraph label name complete.\n'
+        
+        # [Acceleration] filter by subgraph label name
+        print 'Filter subgraph groups by subgraph label name ...'
+        subgraph_groups = filter_groups_by_subgraph_label_name(subgraph_groups, support_num)
+        print 'Filter subgraph groups by subgraph label name complete.\n'
+            
+        # calculate the mark set by WL principle
+        print 'Calculate the mark set ...'
+        subgraph_marksets = calculate_mark_set(As, Vs, subgraph_groups)
+        print 'Calculate the mark set Complete.\n'
+            
+        # select frequent subgraphs
+        print 'Select frequent subgraphs ...'
+        result_As, result_Vs, result_fs = select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, support_num)
+        frequent_As.extend(result_As)
+        frequent_Vs.extend(result_Vs)
+        frequent_fs.extend(result_fs)
+        print 'Select frequent subgraphs complete.\n'
+            
+        # [Acceleration] disband subgraphs for next iteration
+        print 'Disband subgraphs by subgraph label name ...'
+        subgraphs = subgraphs_disband(As, Vs, subgraph_groups)
+        print 'Disband subgraphs by subgraph label name complete.\n'
+    
+    # save and show results
+    result_save_show(frequent_As, frequent_Vs, frequent_fs)
                     
