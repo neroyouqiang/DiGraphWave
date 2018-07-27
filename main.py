@@ -35,13 +35,23 @@ def generate_bigger_subgraph(As, Vs, subgraphs_1):
             subgraph_k = []
             for nodes in subgraph_1:
                 # the connected nodes
-                connected_yesno = A[nodes].any(axis=0)
-                connected_indexes = np.argwhere(connected_yesno != 0).reshape(-1)
+                connected_yesno_r = A[nodes, :].any(axis=0)
+                connected_yesno_c = A[:, nodes].any(axis=1)
+                connected_yesno = connected_yesno_r | connected_yesno_c
+                connected_indexes = np.argwhere(connected_yesno).reshape(-1).tolist()
+                # connected_indexes_r = np.argwhere(connected_yesno_r).reshape(-1).tolist()
+                # connected_indexes_c = np.argwhere(connected_yesno_c).reshape(-1).tolist()
+                # connect data
+                # connected_indexes = connected_indexes_r
+                # connected_indexes.extend(connected_indexes_c)
+                # get rid of the repeated node
+                # connected_indexes = set(connected_indexes_r)
+                # add 
                 for index in connected_indexes:
                     # create node set
                     if index not in nodes:
                         nodes_k = list(nodes)
-                        # insert and sort ssubgraph_k
+                        # insert and sort subgraph_k
                         for pp in xrange(len(nodes_k) + 1):
                             if pp == len(nodes_k):
                                 nodes_k.append(index)
@@ -180,8 +190,8 @@ def calculate_mark_set(As, Vs, subgraph_groups, ite_num=3):
                     new_nodes = []
                     for kk in xrange(len(subgraph_label[ii][jj])):
                         # get connected node labels
-                        connected_labels_1 = subgraph_label[ii][jj][A[kk] == 1]
-                        connected_labels_2 = subgraph_label[ii][jj][A[kk] == -1]
+                        connected_labels_1 = subgraph_label[ii][jj][A[kk, :] == 1]
+                        connected_labels_2 = subgraph_label[ii][jj][A[:, kk] == 1]
                         # injective map
                         name = ''
                         for lb in connected_labels_1:

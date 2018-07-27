@@ -41,9 +41,9 @@ def load_datas():
             As.append(A)
             Vs.append(V)
     
-    for tt in xrange(11):
-        As.extend(list(As))
-        Vs.extend(list(Vs))
+    # for tt in xrange(11):
+    #     As.extend(list(As))
+    #     Vs.extend(list(Vs))
     
     # return 
     return As, Vs

@@ -1,9 +1,9 @@
 (lp0
-I6144
-aI6144
-aI6144
-aI6144
-aI6144
-aI6144
-aI6144
+I5
+aI5
+aI5
+aI5
+aI5
+aI5
+aI5
 a.
