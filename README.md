@@ -37,3 +37,7 @@ The adjacent matrix is</br>
 --min_support MIN_SUPPORT  Minimum suport of the frequent subgraph. Default: 1.0.                
 --max_size MAX_SIZE        Maximum size of the common subgraph. -1 means not limited. Default: -1.
 ```
+
+### 3. Run
+
+The computing complexity is O(NM^2), where N is the number of the graph and M is the number of the Vertices in each graph.
