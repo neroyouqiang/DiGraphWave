@@ -38,6 +38,6 @@ The adjacent matrix is</br>
 --max_size MAX_SIZE        Maximum size of the common subgraph. -1 means not limited. Default: -1.
 ```
 
-### 3. Run
+### 3. Complexity
 
 The computing complexity is O(NM^2), where N is the number of the graph and M is the number of the Vertices in each graph.
