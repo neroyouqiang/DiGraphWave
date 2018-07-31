@@ -4,6 +4,8 @@ import argparse
 import numpy as np
 import pickle
 # import MySQLdb
+from time import time
+from itertools import combinations, permutations
 
 from mydata import load_datas, get_min_graph_size
 
@@ -14,8 +16,12 @@ parser.add_argument('--min_support', type = float, default = '1.0',
 parser.add_argument('--max_size', type = int, default = '-1', 
                     help = 'Maximum size of the common subgraph. -1 means not limited.')
 
+# Test_1 = []
+# Test_2 = []
 
 def generate_bigger_subgraph(As, Vs, subgraphs_1):
+    # global Test_1
+    # global Test_2
     # data to return
     subgraphs_k = []
     
@@ -25,7 +31,12 @@ def generate_bigger_subgraph(As, Vs, subgraphs_1):
         for ii in xrange(len(As)):
             A = As[ii]
             V = Vs[ii]
-            subgraphs_k.append([[x] for x in xrange(len(V))])
+            subgraphs_k.append([])
+            for n in xrange(len(V)):
+                subgraphs_k[ii].append({'nodes':[n], 'edges':np.zeros((1, 1), dtype=int)})
+                # if(A[n, n] != 0):
+                #     subgraphs_k[ii].append({'nodes':[n], 'edges':np.ones((1, 1), dtype=int)})    
+            # subgraphs_k.append([[x] for x in xrange(len(V))])
     else: 
         # generate k+1 size subgraphs
         for ii in xrange(len(As)):# xrange(len(As)):
@@ -33,34 +44,66 @@ def generate_bigger_subgraph(As, Vs, subgraphs_1):
             # V = Vs[ii]
             subgraph_1 = subgraphs_1[ii]
             subgraph_k = []
-            for nodes in subgraph_1:
-                # the connected nodes
+            for mynodes in subgraph_1:
+                nodes = mynodes["nodes"] # nodes list
+                edges = mynodes["edges"] # edges matrix
+                
+                # get connected nodes
                 connected_yesno_r = A[nodes, :].any(axis=0)
                 connected_yesno_c = A[:, nodes].any(axis=1)
                 connected_yesno = connected_yesno_r | connected_yesno_c
-                connected_indexes = np.argwhere(connected_yesno).reshape(-1).tolist()
-                # connected_indexes_r = np.argwhere(connected_yesno_r).reshape(-1).tolist()
-                # connected_indexes_c = np.argwhere(connected_yesno_c).reshape(-1).tolist()
-                # connect data
-                # connected_indexes = connected_indexes_r
-                # connected_indexes.extend(connected_indexes_c)
-                # get rid of the repeated node
-                # connected_indexes = set(connected_indexes_r)
-                # add 
-                for index in connected_indexes:
-                    # create node set
-                    if index not in nodes:
+                connected_nodes = np.argwhere(connected_yesno).reshape(-1).tolist()
+                
+                # traverse connected nodes
+                for connected_node in connected_nodes:
+                    if connected_node not in nodes:
+                        # create nodes list
                         nodes_k = list(nodes)
-                        # insert and sort subgraph_k
+                        
+                        # insert and sort nodes list
                         for pp in xrange(len(nodes_k) + 1):
                             if pp == len(nodes_k):
-                                nodes_k.append(index)
-                            elif nodes_k[pp] > index:
-                                nodes_k.insert(pp, index)
+                                nodes_k.append(connected_node)
+                            elif nodes_k[pp] > connected_node:
+                                nodes_k.insert(pp, connected_node)
                                 break;
-                        # add new node set
-                        if nodes_k not in subgraph_k:
-                            subgraph_k.append(nodes_k)
+                                
+                        # get connected edges
+                        connected_edges = []
+                        for nn in nodes:
+                            if A[nn, connected_node]:
+                                connected_edges.append([nn, connected_node])
+                            if A[connected_node, nn]:
+                                connected_edges.append([connected_node, nn])
+                        
+                        # traverse connected edges
+                        for edge_num in xrange(len(connected_edges)):
+                            for ees in combinations(connected_edges, edge_num + 1):
+                                # create edges matrix
+                                edges_k = np.zeros(A.shape, dtype=int)
+                                edges_k_t = edges_k[nodes, :]
+                                edges_k_t[:, nodes] = edges.copy()
+                                edges_k[nodes, :] = edges_k_t
+                                
+                                for ee in ees:
+                                    edges_k[ee[0], ee[1]] = 1
+                                edges_k = edges_k[nodes_k, :][:, nodes_k]
+                            
+                                # insert edges matrix
+                                mynodes_k = {}
+                                mynodes_k["nodes"] = nodes_k
+                                mynodes_k["edges"] = edges_k
+                                
+                                # add new node set
+                                for tt in xrange(len(subgraph_k) + 1):
+                                    if tt == len(subgraph_k):
+                                        subgraph_k.append(mynodes_k)
+                                    elif mynodes_k["nodes"] == subgraph_k[tt]["nodes"]:
+                                        if (mynodes_k["edges"] == subgraph_k[tt]["edges"]).all():
+                                            break;
+                                            
+                                # if nodes_k not in subgraph_k:
+                                #     subgraph_k.append(nodes_k)
             
             # add to data list
             subgraphs_k.append(subgraph_k)
@@ -68,33 +111,25 @@ def generate_bigger_subgraph(As, Vs, subgraphs_1):
     # return
     return subgraphs_k
 
-'''
-def generate_subgraphs(As, Vs, max_size=5, silence=False):
-    # data to return
-    subgraphs = []
-    subgraphs_list = []
-    
-    # generate
-    for ii in xrange(max_size):
-        if not silence: print 'Generate', ii, 'size subgraphs ...'
-        subgraphs = generate_bigger_subgraph(As, Vs, subgraphs)
-        subgraphs_list.append(subgraphs)
-        # save
-        pickle.dump(subgraphs, open('./saves/subgraphs/%03d.csv' % (ii + 1), 'w'))
-        
-    # return 
-    return subgraphs_list
-'''
 
 def subgraphs_group(As, Vs, subgraphs): 
     # data to return
     subgraph_groups = {}
     
+    # used for list corresponding to each data
+    # data_list = []
+    # for ii in xrange(len(subgraphs)):
+    #     data_list.append([])
+                    
     for ii in xrange(len(subgraphs)):
         subgraph = subgraphs[ii]
+        A = As[ii]
         V = Vs[ii]
-        for nodes in subgraph:
-            # count label number
+        for mynodes in subgraph:
+            nodes = mynodes["nodes"] # nodes list
+            edges = mynodes["edges"] # edges matrix
+                
+            # count vertex label number
             label_array = []
             for label in V[nodes]:
                 # add array items
@@ -103,22 +138,53 @@ def subgraphs_group(As, Vs, subgraphs):
                 # counting
                 label_array[label - 1] += 1
             
-            # generate subgraph label name
-            name = ''
+            # count edge label number
+            # edge_array = []
+            # for eii in xrange(edges.shape[0]):
+            #     for ejj in xrange(edges.shape[1]):
+            #         edge = edges[eii, ejj]
+            #         label = A[nodes[eii], nodes[ejj]]
+            #         if edge > 0 and label > 0:
+            #             # add array items
+            #             for tt in xrange(label - len(edge_array)):
+            #                 edge_array.append(0)
+            #             # counting
+            #             edge_array[label - 1] += 1
+                
+            # count edge number
+            edge_num = edges.sum()
+            
+            # generate subgraph label 
+            assert edge_num <= 1000, 'There are too many edges'
+            name = '%03d' % edge_num
+            
+            # name = ''
+            # for tt in xrange(len(edge_array)):
+            #     assert tt <= 100, 'There are too many types of the edge label'
+            #     assert edge_array[tt] <= 1000, 'There are too many edges'
+            #     name += '-%02d-%03d' % (tt + 1, edge_array[tt])
+            # name += '+'
+                
             for tt in xrange(len(label_array)):
                 assert tt <= 100, 'There are too many types of the node label'
                 assert label_array[tt] <= 1000, 'There are too many nodes'
-                name += '%02d%03d' % (tt + 1, label_array[tt])
+                name += '-%02d-%03d' % (tt + 1, label_array[tt])
+                
+            print name
             
+            # print name
             # init new key in map
             if not subgraph_groups.has_key(name):
                 subgraph_groups[name] = []
                 for tt in xrange(len(subgraphs)):
                     subgraph_groups[name].append([])
-                    
+                # subgraph_groups[name] = list(data_list)
+                
             # add nodes to map
-            subgraph_groups[name][ii].append(nodes)
-            
+            subgraph_groups[name][ii].append(mynodes)
+        
+    
+    # print subgraph_groups        
     return subgraph_groups
 
 
@@ -171,7 +237,7 @@ def calculate_mark_set(As, Vs, subgraph_groups, ite_num=3):
             subgraph_label.append([])
             subgraph_markset.append([])
             for jj in xrange(len(subgraph_group[ii])):
-                subgraph_label[ii].append(Vs[ii][subgraph_group[ii][jj]])
+                subgraph_label[ii].append(Vs[ii][subgraph_group[ii][jj]["nodes"]])
                 subgraph_markset[ii].append(set(subgraph_label[ii][jj]))
                 
         # iteratively refresh labels
@@ -183,8 +249,10 @@ def calculate_mark_set(As, Vs, subgraph_groups, ite_num=3):
             for ii in xrange(len(subgraph_group)):
                 for jj in xrange(len(subgraph_group[ii])):
                     # get subgraph adjacent matrix
-                    nodes = subgraph_group[ii][jj]
-                    A = As[ii][nodes][:, nodes]
+                    mynodes = subgraph_group[ii][jj]
+                    nodes = mynodes["nodes"] # nodes list
+                    edges = mynodes["edges"] # edges matrix
+                    A = As[ii][nodes][:, nodes] & edges
                     
                     # refresh subgraph label
                     new_nodes = []
@@ -269,12 +337,14 @@ def select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, support
             if list_count[tt] >= support_num:
                 # position information
                 pos = list_poistion[tt][0]
-                nodes = subgraph_group[pos['ii']][pos['jj']]
+                mynodes = subgraph_group[pos['ii']][pos['jj']]
+                nodes = mynodes["nodes"] # nodes list
+                edges = mynodes["edges"] # edges matrix
                 
                 # graph information
                 frequent_fs.append(list_count[tt])
                 frequent_Vs.append(Vs[pos['ii']][nodes])
-                frequent_As.append(As[pos['ii']][nodes][:, nodes])
+                frequent_As.append(As[pos['ii']][nodes][:, nodes] & edges)
                 
                 # [Acceleration] add to new subgraph list
                 for pos in list_poistion[tt]:
@@ -285,7 +355,7 @@ def select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, support
         subgraph_groups[key] = subgraph_group_new
     
     # return 
-    return frequent_As, frequent_Vs, frequent_fs 
+    return frequent_As, frequent_Vs, frequent_fs, subgraph_groups
 
 
 def result_save_show(frequent_As, frequent_Vs, frequent_fs):
@@ -306,6 +376,29 @@ def result_save_show(frequent_As, frequent_Vs, frequent_fs):
         print ''
 
 
+def cut_infrequent_subgraphs(As, tt, subgraphs):
+    # [Acceleration] cut unfrequent vertex
+    if tt == 1:
+        for ii in xrange(len(As)):
+            vertices = [x[0] for x in subgraphs[ii]]
+            A_t = np.zeros(As[ii].shape)
+            A_t[vertices, :] = As[ii][vertices, :]
+            A_t[:, vertices] = As[ii][:, vertices]
+            As[ii] = A_t
+                
+    # [Acceleration] cut unfrequent edges
+    elif tt == 2:
+        for ii in xrange(len(As)):
+            A_t = np.zeros(As[ii].shape)
+            for nodes in subgraphs[ii]:
+                A_t[nodes[0], nodes[1]] = As[ii][nodes[0], nodes[1]]
+                A_t[nodes[1], nodes[0]] = As[ii][nodes[1], nodes[0]]
+            As[ii] = A_t
+    
+    # return 
+    return As
+
+
 if __name__ == '__main__':
     # parser
     FLAGS, unparsed = parser.parse_known_args()
@@ -322,15 +415,20 @@ if __name__ == '__main__':
     # print start info
     print '\nSearch for the frequent subgraph. Minimum support is %d. Maximum subgraph size is %d. \n' % (support_num, max_size)
     
+    start = time()
+    
     subgraphs = []
     frequent_As = []
     frequent_Vs = []
     frequent_fs = []
-    for ii in xrange(max_size):
+    for tt in xrange(max_size):
+        # [Acceleration] cut infrequent vertices and edges
+        # As = cut_infrequent_subgraphs(As, tt, subgraphs)
+        
         # get different subgraphs with different size
-        print 'Generate', ii, 'size subgraphs ...'
+        print 'Generate', tt + 1, 'size subgraphs ...'
         subgraphs = generate_bigger_subgraph(As, Vs, subgraphs)
-        print 'Generate', ii, 'size subgraphs complete.\n'
+        print 'Generate', tt + 1, 'size subgraphs complete.\n'
         
         # get different subgraphs with different size
         # print 'Generate subgraphs ...'
@@ -340,6 +438,7 @@ if __name__ == '__main__':
         # group subgraphs by node labels  
         print 'Group subgraphs by subgraph label name ...'
         subgraph_groups = subgraphs_group(As, Vs, subgraphs)
+        # print subgraph_groups
         print 'Group subgraphs by subgraph label name complete.\n'
         
         # [Acceleration] filter by subgraph label name
@@ -354,7 +453,7 @@ if __name__ == '__main__':
             
         # select frequent subgraphs
         print 'Select frequent subgraphs ...'
-        result_As, result_Vs, result_fs = select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, support_num)
+        result_As, result_Vs, result_fs, subgraph_groups = select_frequent_sugraphs(As, Vs, subgraph_groups, subgraph_marksets, support_num)
         frequent_As.extend(result_As)
         frequent_Vs.extend(result_Vs)
         frequent_fs.extend(result_fs)
@@ -364,7 +463,15 @@ if __name__ == '__main__':
         print 'Disband subgraphs by subgraph label name ...'
         subgraphs = subgraphs_disband(As, Vs, subgraph_groups)
         print 'Disband subgraphs by subgraph label name complete.\n'
+        
+        # [Acceleration] If no frequent subgraphs are found, stop.
+        if len(result_As) <= 0:
+            break;
+    
+    end = time()
     
     # save and show results
     result_save_show(frequent_As, frequent_Vs, frequent_fs)
+    
+    print "\nRunning time:", end - start
                     

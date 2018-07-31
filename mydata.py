@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import numpy as np
 
 
@@ -34,14 +35,18 @@ def load_datas():
     # get file name
     file_names = get_data_files()
     
+    # for file_name in file_names:
+    #     print re.match(".+\.csv$", file_name)
+    
     # load data
     for file_name in file_names:
-        A, V = load_A_V(file_name)
-        if len(V) >= 1:
-            As.append(A)
-            Vs.append(V)
+        if re.match(".+\.csv$", file_name):
+            A, V = load_A_V(file_name)
+            if len(V) >= 1:
+                As.append(A)
+                Vs.append(V)
     
-    # for tt in xrange(11):
+    # for tt in xrange(10):
     #     As.extend(list(As))
     #     Vs.extend(list(Vs))
     
