@@ -1,1 +1,4 @@
 backup/*
+*test*
+saves/results/*
+saves/*.csv

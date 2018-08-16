@@ -18,7 +18,7 @@ def get_data_files():
         
 
 def load_A_V(file_name):
-    data = np.loadtxt(file_name, delimiter=',', dtype=int)
+    data = np.loadtxt(file_name, delimiter=',', dtype=float)
     # node_num = file_name.shape[1]
     
     V = data[0, :]
@@ -41,6 +41,7 @@ def load_datas():
     # load data
     for file_name in file_names:
         if re.match(".+\.csv$", file_name):
+            # print file_name
             A, V = load_A_V(file_name)
             if len(V) >= 1:
                 As.append(A)
