@@ -47,11 +47,3 @@ The adjacent matrix is</br>
 --max_size MAX_SIZE        Maximum size of the common subgraph. -1 means not limited. Default: -1.
 ```
 
-
-<strong>python main_wavelet.py [-h] [--relabel] [--cal_distance]</strong>
-```
--h, --help      show this help message and exit
---relabel       Whether to relabel the vertice or not. Default: True.
---cal_distance  Whether to calculate the distance between the embedded vertice or not. Default: True.
-```
-
