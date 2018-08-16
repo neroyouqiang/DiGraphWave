@@ -31,6 +31,15 @@ The adjacent matrix is</br>
 
 ### 2. Run
 
+<strong>Graph spectral analysis approach</strong>
+<strong>python main_wavelet.py [-h] [--relabel] [--cal_distance]</strong>
+```
+-h, --help      show this help message and exit
+--relabel       Whether to relabel the vertice or not. Default: True.
+--cal_distance  Whether to calculate the distance between the embedded vertice or not. Default: True.
+```
+
+<strong>Datamining approach</strong>
 <strong>python main_datamining.py [-h] [--min_support MIN_SUPPORT] [--max_size MAX_SIZE]</strong>
 ```
 -h, --help                 show this help message and exit
