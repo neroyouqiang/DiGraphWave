@@ -5,21 +5,21 @@ import numpy as np
 import pandas as pd
 import pickle
 from time import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from mydata import load_datas
-from mynetworkxtools import get_grid_graph
-from mygraphwavelet import cal_embedding, cal_distances
-from myverticelabel import vertice_label, vertice_reshape
+from loaddata import load_datas
+from networkxtools import get_grid_graph
+from graphwavelet import cal_embedding, cal_distances
+from verticelabel import vertice_label, vertice_reshape
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--directed', action = 'store_true',
-                    help = 'Whether the graph is directed graph or not. ')
+#parser.add_argument('--directed', action = 'store_true',
+#                    help = 'Whether the graph is directed graph or not. ')
 parser.add_argument('--relabel', action = 'store_false',
-                    help = 'Whether to relabel the vertice. ')
+                    help = 'Whether to relabel the vertice or not. ')
 parser.add_argument('--cal_distance', action = 'store_false',
-                    help = 'Whether to calculate the distance between the embedded vertice. ')
+                    help = 'Whether to calculate the distance between the embedded vertice or not. ')
 
 
 def save_embeddings(embeddings, Vs):
@@ -36,8 +36,8 @@ def save_distances(distances, Vs):
     index = []
     for ii in xrange(len(Vs)):
         for jj in xrange(len(Vs[ii])):
-            columns.append("G%d - N%d" % (ii, jj))
-            index.append("G%d - N%d" % (ii, jj))
+            columns.append("G%d-N%d" % (ii, jj))
+            index.append("G%d-N%d" % (ii, jj))
     
     df = pd.DataFrame(distances, columns=columns, index=index)
     df.to_csv('./saves/results/embeddings_dist.csv', sep=',')
@@ -50,14 +50,19 @@ if __name__ == '__main__':
     # input data
     As, Vs = load_datas()
     
-#    As = [As[2] + As[2].T * 0, As[1] + As[1].T * 0]
+#    As = [As[2] + As[2].T * 1, As[1] + As[1].T * 1]
 #    Vs = [Vs[2], Vs[1]]
     
-#    As = [As[2] + As[2].T * 0]
+#    As = [As[2] + As[2].T * 1]
 #    Vs = [Vs[2]]
     
+#    # test file 6
 #    As = [As[5] + As[5].T * 0]
 #    Vs = [Vs[5]]
+    
+#    # test file 5
+#    As = [As[4] + As[4].T * 0]
+#    Vs = [Vs[4]]
     
 #    As = []
 #    Vs = []
@@ -66,11 +71,6 @@ if __name__ == '__main__':
 #        As.append(A)
 ##        Vs.append(np.array(['a', 'a', 'b', 'a', 'a', 'a', 'a', 'a', 'a']))
 #        Vs.append(V)
-    
-    # whether directed
-    if FLAGS.directed:
-        for ii in xrange(len(As)):
-            As[ii] = As[ii] - As[ii].T
         
     # label the vertice
     if FLAGS.relabel:
@@ -80,6 +80,11 @@ if __name__ == '__main__':
     else:
         Vs = vertice_reshape(Vs)
     
+    # whether directed
+#    if FLAGS.directed:
+#        for ii in xrange(len(As)):
+#            As[ii] = As[ii] - As[ii].T
+            
     # emebedding
     start = time()
     embeddings, Lamdas, Tfs = cal_embedding(As, Vs)

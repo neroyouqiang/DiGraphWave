@@ -7,7 +7,7 @@ import pickle
 from time import time
 from itertools import combinations, permutations
 
-from mydata import load_datas, get_min_graph_size
+from loaddata import load_datas, get_min_graph_size
 
 
 parser = argparse.ArgumentParser()

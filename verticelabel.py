@@ -23,7 +23,8 @@ def vertice_label(As, Vs):
             for key2 in Vmap.keys():
                 if key1 != key2:
                     A = As[ii][Vs[ii] == key1][:, Vs[ii] == key2]
-                    Ac[Vmap[key1], Vmap[key2]] = A.sum()
+                    Ac[Vmap[key1], Vmap[key2]] += A.sum()
+                    Ac[Vmap[key2], Vmap[key1]] += A.sum()
                     
     # node embedding
     eig_vals, eig_vecs = np.linalg.eig(Ac)
@@ -38,7 +39,7 @@ def vertice_label(As, Vs):
         Vs_return.append(np.zeros([len(Vs[ii]), dim], dtype=float))
         for jj in xrange(len(Vs[ii])):
             Vs_return[ii][jj, :] = labels[Vmap[Vs[ii][jj]]]
-            
+    
     # return
     return Vs_return
 
