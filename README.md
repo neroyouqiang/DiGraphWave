@@ -39,7 +39,7 @@ The adjacent matrix is</br>
 ```
 
 
-<strong>python main_.py [--min_support MIN_SUPPORT] [--max_size MAX_SIZE]</strong>
+<strong>python main_wavelet.py [--min_support MIN_SUPPORT] [--max_size MAX_SIZE]</strong>
 ```
 -h, --help      show this help message and exit
 --relabel       Whether to relabel the vertice or not. Default: True.
