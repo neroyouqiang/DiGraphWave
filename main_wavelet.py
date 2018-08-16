@@ -56,8 +56,8 @@ if __name__ == '__main__':
 #    As = [As[2] + As[2].T * 0]
 #    Vs = [Vs[2]]
     
-    As = [As[5] + As[5].T * 0]
-    Vs = [Vs[5]]
+#    As = [As[5] + As[5].T * 0]
+#    Vs = [Vs[5]]
     
 #    As = []
 #    Vs = []
