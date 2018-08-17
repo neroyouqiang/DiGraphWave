@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from time import time
+import cmath
 
 def func_g_1(lamda, s=1):
     return np.exp(-lamda / s)
@@ -47,6 +48,12 @@ def spectrum_indicators(vals, freqs_list):
                 m2[tt] = -((-m2[tt]) ** (1.0 / 2))
             
         m3 = freqs_list[ii].T.dot(vals_3) # (vals_3 * freqs_list[ii]).sum(axis=0)
+        for tt in xrange(len(m3)):
+            if m3[tt] > 0:
+                m3[tt] = m3[tt] ** (1.0 / 3)
+            else:
+                m3[tt] = -((-m3[tt]) ** (1.0 / 3))
+        
 #        if m3 > 0:
 #            m3 = m3 ** (1.0 / 3)
 #        else:
@@ -122,16 +129,29 @@ def spectrum_indicators(vals, freqs_list):
 #    return Lamdas, Tfs
 
 
-def wavelet_spectrum_fast(A, V):
+def wavelet_spectrum_fast(A, V, is_directed=False):
     global RcdTime
     global RcdIndex
     
-    global Alpha, Lamdas, Cheb_Cs, Cheb_M
+    global Alpha, Lamdas, Cheb_Cs, Cheb_M, Lamda_Min, Is_Directed
     
     # calculate Laplacian
-    # A = A + A.T
-    D = np.diag(A.sum(axis=0))
-    L = D - A
+    if Is_Directed:
+        H = A - A.T
+        L = -H.dot(H)
+    else:
+        D = np.diag(A.sum(axis=0))
+        L = D - A
+    
+#    eig_vals, eig_vecs = np.linalg.eig(L)
+#    print L
+#    print eig_vals
+#    print eig_vecs
+    
+#    eig_vals, eig_vecs = np.linalg.eig(L)
+#    print L
+#    print eig_vals
+#    print eig_vecs
     
     # range of the frequency
     Tfs = []
@@ -142,7 +162,7 @@ def wavelet_spectrum_fast(A, V):
         Ts = [V, L.dot(V)]
         
         # some values to use
-        val1 = (2.0 / Alpha) * (L - Alpha * np.eye(len(V)))
+        val1 = (2.0 / Alpha) * (L - (Alpha + Lamda_Min) * np.eye(len(V)))
         
         # Chebyshev recurrence
         for ii in xrange(2, Cheb_M + 1):
@@ -170,8 +190,8 @@ def cal_embedding(As, Vs):
     """
     The main calling function.
     """
-    global RcdTime
-    global RcdIndex
+    global RcdTime, RcdIndex
+    global Lamda_Min
     RcdTime = []
     
     # data to return
@@ -190,7 +210,7 @@ def cal_embedding(As, Vs):
         
         # calculate indicators as embedding
         start = time()
-        embeddings.extend(spectrum_indicators(Lamdas - Lamda_Min, Tfs))
+        embeddings.extend(spectrum_indicators(Lamdas, Tfs))
         RcdTime[RcdIndex][1] = time() - start
         
     embeddings = np.array(embeddings)
@@ -217,15 +237,28 @@ def cal_distances(embeddings):
     # return
     return dist
 
-# global Constant
+# global variables
 Lamda_Max = 10.0
 Lamda_Min = 0.0
 Alpha = 0.0
 Lamdas = []
 Cheb_Cs = {}
 Cheb_M = 5
-def init():
-    global Lamda_Max, Alpha, Lamdas, Cheb_Cs
+Is_Directed = False
+
+def init(is_directed=False):
+    global Lamda_Max, Lamda_Min, Is_Directed
+    global Alpha, Lamdas, Cheb_Cs
+    
+    # init variables
+    if is_directed:
+        Lamda_Max = 10.0
+        Lamda_Min = 0.0
+    else:
+        Lamda_Max = 10.0
+        Lamda_Min = 0.0
+        
+    Is_Directed = is_directed
     
     # generate params
     Alpha = (Lamda_Max - Lamda_Min) / 2.0
@@ -236,6 +269,6 @@ def init():
         xs = np.linspace(-1.0, 1.0, 21)
         ys = [func_g_4((x + 1) * Alpha + Lamda_Min, lamda) for x in xs]
         Cheb_Cs[lamda] = np.polynomial.chebyshev.chebfit(xs, ys, deg=5)
-        
+#    print Cheb_Cs
 # init
-init();
+# init(is_directed=False);
