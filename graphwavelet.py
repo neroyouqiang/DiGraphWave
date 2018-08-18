@@ -143,10 +143,10 @@ def wavelet_spectrum_fast(A, V, is_directed=False):
         D = np.diag(A.sum(axis=0))
         L = D - A
     
-#    eig_vals, eig_vecs = np.linalg.eig(L)
-#    print L
-#    print eig_vals
-#    print eig_vecs
+    eig_vals, eig_vecs = np.linalg.eig(L)
+    print L
+    print eig_vals
+    print eig_vecs
     
 #    eig_vals, eig_vecs = np.linalg.eig(L)
 #    print L

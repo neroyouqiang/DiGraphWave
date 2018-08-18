@@ -54,16 +54,16 @@ if __name__ == '__main__':
 #    As = [As[2] + As[2].T * 1, As[1] + As[1].T * 1]
 #    Vs = [Vs[2], Vs[1]]
     
-#    As = [As[2] + As[2].T * 0]
-#    Vs = [Vs[2]]
+    As = [As[2] + As[2].T * 0]
+    Vs = [Vs[2]]
     
 #    # test file 6
 #    As = [As[5] + As[5].T * 0]
 #    Vs = [Vs[5]]
     
 #    # test file 5
-    As = [As[4] + As[4].T * 0]
-    Vs = [Vs[4]]
+#    As = [As[4] + As[4].T * 0]
+#    Vs = [Vs[4]]
     
 #    As = []
 #    Vs = []
